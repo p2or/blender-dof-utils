@@ -416,7 +416,7 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
         col = self.layout.column(align=True)
         row = col.row(align=True)
         viz = row.row(align=True)
-        viz.active =  not dofu.draw_dof # enabled
+        viz.enabled =  not dofu.draw_dof # enabled
         viz.operator("dofutils.visualize_dof", icon="SNAP_NORMAL" if not dofu.draw_dof else "REC")
         row = row.row(align=True)
         row.operator("dofutils.kill_visualization", icon="X", text="")
@@ -437,11 +437,15 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
         row = col.row(align=True)
         pic = row.row(align=True)
         active_flag = not dofu.use_cursor and cam_ob.dof_object is None
-        pic.active = active_flag # enabled
+        pic.enabled = active_flag # enabled
         pic.operator("dofutils.focus_picking", icon="CURSOR" if active_flag else "REC")
         row = row.row(align=True) #layout.prop_search(dofu, "camera", bpy.data, "cameras")
+        row.enabled = cam_ob.dof_object is None
         row.operator("dofutils.kill_focus_picking", icon="X", text="")
-        col.prop(cam_ob, "dof_distance", text="Distance")
+        row = col.row(align=True)
+        pic = row.row(align=True)
+        pic.enabled = active_flag # active
+        pic.prop(cam_ob, "dof_distance", text="Distance")
         col.prop(cam_ob, "dof_object", text="")
 
         col = self.layout.column(align=True)
