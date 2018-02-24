@@ -381,8 +381,8 @@ class visualizeDepthOfField(bpy.types.Operator):
                 args = (self, context)
                 # Add the region OpenGL drawing callback, draw in view space with 'POST_VIEW' and 'PRE_VIEW'
                 self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_3d, args, 'WINDOW', 'POST_VIEW')
-                if prefs.display_info:
-                    self._handle_2d = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
+                #if prefs.display_info:
+                    #self._handle_2d = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
                 context.window_manager.modal_handler_add(self)
                 dofu.draw_dof = True
                 self.redraw_viewports(context)
@@ -446,9 +446,9 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
         row.enabled = cam_ob.dof_object is None
         row.operator("dofutils.kill_focus_picking", icon="X", text="")
         row = col.row(align=True)
-        pic = row.row(align=True)
-        pic.enabled = active_flag # active
-        pic.prop(cam_ob, "dof_distance", text="Distance")
+        dis = row.row(align=True)
+        dis.enabled = active_flag # active
+        dis.prop(cam_ob, "dof_distance", text="Distance")
         col.prop(cam_ob, "dof_object", text="")
 
         col = self.layout.column(align=True)
