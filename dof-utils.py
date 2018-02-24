@@ -303,8 +303,10 @@ class focusPicking(bpy.types.Operator):
         
         elif event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.use_cursor:
             dofu.use_cursor = False
-            if prefs.display_info:
+            try:
                 bpy.types.SpaceView3D.draw_handler_remove(self._handle_2d, 'WINDOW')
+            except:
+                pass
             self.redraw_viewports(context)
             return {'CANCELLED'}
         return {'PASS_THROUGH'}
@@ -360,8 +362,10 @@ class visualizeDepthOfField(bpy.types.Operator):
         if event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.draw_dof:
             dofu.draw_dof = False
             bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
-            if prefs.display_info:
+            try:
                 bpy.types.SpaceView3D.draw_handler_remove(self._handle_2d, 'WINDOW')
+            except:
+                pass
             context.area.header_text_set()
             self.redraw_viewports(context)
             return {'CANCELLED'}
@@ -379,7 +383,6 @@ class visualizeDepthOfField(bpy.types.Operator):
                 self._handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_3d, args, 'WINDOW', 'POST_VIEW')
                 if prefs.display_info:
                     self._handle_2d = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
-                
                 context.window_manager.modal_handler_add(self)
                 dofu.draw_dof = True
                 self.redraw_viewports(context)
