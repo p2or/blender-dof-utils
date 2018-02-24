@@ -483,7 +483,7 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
         pic = row.row(align=True)
         active_flag = not dofu.use_cursor and cam_ob.dof_object is None
         pic.enabled = active_flag # enabled
-        pic.operator("dof_utils.focus_picking", icon="CURSOR" if active_flag else "REC")
+        pic.operator("dof_utils.focus_picking", icon="CURSOR" if active_flag or cam_ob.dof_object else "REC")
         row = row.row(align=True) #layout.prop_search(dofu, "camera", bpy.data, "cameras")
         row.enabled = cam_ob.dof_object is None
         row.operator("dof_utils.kill_focus_picking", icon="X", text="")
