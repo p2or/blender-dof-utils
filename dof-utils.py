@@ -81,8 +81,38 @@ class DofUtilsSettings(bpy.types.PropertyGroup):
     overlay = bpy.props.BoolProperty(
         name="Line overlay",
         description="Display DoF above all other Elements",
-        default = True)
-    
+        default=True)
+
+    size_limits = bpy.props.FloatProperty(
+        name="Size",
+        description="Limit Radius",
+        min=0.0,
+        step=1,
+        default=0.1)
+
+    fill_limits = bpy.props.BoolProperty(
+        name="Fill limits",
+        description="Fill Limits",
+        default=False)
+
+    color_limits = bpy.props.FloatVectorProperty(  
+       name="Color Limits",
+       subtype='COLOR',
+       default=(0.0, 1.0, 0.0),
+       min=0.0, max=1.0,
+       description="color picker")
+
+    segments_limits = bpy.props.IntProperty(  
+       name="Segments",
+       default=16,
+       min=3, max=32)
+
+    opacity_limits = bpy.props.FloatProperty(
+        name="Opacity",
+        min=0.0, max=1.0,
+        step=1,
+        default=0.9)
+
     limits = bpy.props.FloatVectorProperty(
             name="Limits",
             size=3)
@@ -210,7 +240,18 @@ def draw_callback_3d(operator, context):
     # define the lines
     line((1.0, 1.0, 1.0, 0.1), dof_loc_end, end)
     line((1.0, 1.0, 1.0, 0.1), dof_loc, start)
-    line((0.0, 1.0, 0.0, 0.8), dof_loc_end, dof_loc)
+    line((dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits), dof_loc_end, dof_loc)
+
+    if dofu.size_limits > 0:
+        #draw_empty_by_matix(matrix=temp_matrix, offset=-near_limit, size=1)
+        for i in [near_limit, far_limit]:
+            draw_circle_by_matrix(
+                matrix=temp_matrix, 
+                offset=-i, 
+                color=(dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits), 
+                radius=dofu.size_limits, 
+                fill=dofu.fill_limits,
+                num_segments=dofu.segments_limits)
 
     # restore opengl defaults
     bgl.glLineWidth(1)
@@ -246,6 +287,67 @@ def draw_callback_2d(operator, context):
         ]
     draw_string(x, y, ps)
  
+
+def draw_line_3d(start, end, color=None, width=1):
+    color = (0.0, 0.0, 0.0, 1.0) if color is None else color
+    bgl.glColor4f(*color)
+    bgl.glLineWidth(width)
+    bgl.glBegin(bgl.GL_LINES)
+    bgl.glVertex3f(*start)
+    bgl.glVertex3f(*end)
+    bgl.glEnd()
+
+'''
+def draw_empty_by_matix(matrix, size, offset=0, offset_axis="Z", color=None, width=1):
+    vector_list = [
+        Vector((size, 0, 0)), Vector((-size, 0, 0)), # x
+        Vector((0, size, 0)), Vector((0, -size, 0)), # y
+        Vector((0, 0, size)), Vector((0, 0, -size))] # z
+    
+    translate = {
+        'X': Vector((offset, 0, 0)), 
+        'Y': Vector((0, offset, 0)), 
+        'Z': Vector((0, 0, offset))}
+    
+    origin = matrix * translate[offset_axis] #origin = matrix * Vector((0, 0, 0))
+    for v in vector_list:
+        end = matrix * (v + translate[offset_axis])
+        draw_line_3d(origin, end)
+'''
+
+# based on http://slabode.exofire.net/circle_draw.shtml
+def draw_circle_by_matrix(matrix, radius=.1, num_segments=16, offset=0, offset_axis="Z", color=None, width=1, fill=False):
+    #precalculate the sine and cosine
+    theta = 2 * math.pi / num_segments
+    c = math.cos(theta)
+    s = math.sin(theta)
+    x = radius
+    y = 0
+    
+    vector_list = []
+    for i in range (num_segments):
+        vector_list.append(Vector((x, y, 0))) # output vertex
+        t = x
+        x = c * x - s * y
+        y = s * t + c * y
+    
+    translate = {
+        'X': Vector((offset, 0, 0)), 
+        'Y': Vector((0, offset, 0)), 
+        'Z': Vector((0, 0, offset))}
+        
+    color = (0.0, 0.0, 0.0, 1.0) if color is None else color
+    bgl.glColor4f(*color)
+    bgl.glLineWidth(width)
+    if not fill: # bgl.GL_TRIANGLE_FAN, http://www.glprogramming.com/red/chapter02.html
+        bgl.glBegin(bgl.GL_LINE_LOOP)
+    else:
+        bgl.glBegin(bgl.GL_TRIANGLE_FAN)
+    for v in vector_list:
+        coord = matrix * (v + translate[offset_axis])
+        bgl.glVertex3f(*coord)
+    bgl.glEnd()
+
 
 # -------------------------------------------------------------------
 #   Operators    
@@ -461,12 +563,27 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
         col = self.layout.column(align=True)
         row = col.row(align=True)
         viz = row.row(align=True)
-        viz.enabled =  not dofu.draw_dof # enabled
+        viz.enabled = not dofu.draw_dof # enabled
         viz.operator("dof_utils.visualize_dof", icon="SNAP_NORMAL" if not dofu.draw_dof else "REC")
         row = row.row(align=True)
         row.operator("dof_utils.kill_visualization", icon="X", text="")
+
+        row = col.row(align=True)
+        #split = row.split(.1,align=True)
+
+        row.prop(dofu, "color_limits", text="")
+        
+        #row.prop(dofu, "segments_limits")
+        
+        row = col.row(align=True)
+        row.prop(dofu, "size_limits")
+        row.prop(dofu, "opacity_limits")
+        
+        row.prop(dofu, "segments_limits")
+        
         row = col.row(align=True)
         row.prop(dofu, "overlay", text="Overlay Limits", toggle=True)
+        row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")        
 
         col = self.layout.column(align=True)
         col.label("Aperture:")
@@ -519,5 +636,3 @@ def unregister():
     
 if __name__ == "__main__":
     register()
-    
-    
