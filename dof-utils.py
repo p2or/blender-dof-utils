@@ -94,6 +94,11 @@ class DofUtilsSettings(bpy.types.PropertyGroup):
         name="Fill limits",
         description="Fill Limits",
         default=False)
+    
+    draw_focus = bpy.props.BoolProperty(
+        name="Display Focus",
+        description="Draw Focus",
+        default=True)
 
     color_limits = bpy.props.FloatVectorProperty(  
        name="Color Limits",
@@ -253,6 +258,13 @@ def draw_callback_3d(operator, context):
                 fill=dofu.fill_limits,
                 num_segments=dofu.segments_limits)
 
+    if dofu.draw_focus:
+        draw_2d_empty_by_matix(
+            matrix=temp_matrix,
+            offset=-cam.dof_distance, 
+            size=dofu.size_limits,
+            color=(dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits))
+
     # restore opengl defaults
     bgl.glLineWidth(1)
     bgl.glDisable(bgl.GL_BLEND)
@@ -314,6 +326,21 @@ def draw_empty_by_matix(matrix, size, offset=0, offset_axis="Z", color=None, wid
         end = matrix * (v + translate[offset_axis])
         draw_line_3d(origin, end)
 '''
+
+def draw_2d_empty_by_matix(matrix, size, offset=0, offset_axis="Z", color=None, width=1):
+    vector_list = [
+        Vector((size, 0, 0)), Vector((-size, 0, 0)), # x
+        Vector((0, size, 0)), Vector((0, -size, 0))] # y
+    
+    translate = {
+        'X': Vector((offset, 0, 0)), 
+        'Y': Vector((0, offset, 0)), 
+        'Z': Vector((0, 0, offset))}
+    
+    origin = matrix * translate[offset_axis] #origin = matrix * Vector((0, 0, 0))
+    for v in vector_list:
+        end = matrix * (v + translate[offset_axis])
+        draw_line_3d(origin, end)
 
 # based on http://slabode.exofire.net/circle_draw.shtml
 def draw_circle_by_matrix(matrix, radius=.1, num_segments=16, offset=0, offset_axis="Z", color=None, width=1, fill=False):
@@ -571,16 +598,15 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
         row = col.row(align=True)
         #split = row.split(.1,align=True)
         row.prop(dofu, "color_limits", text="")
-               
         row = col.row(align=True)
         row.prop(dofu, "size_limits")
         row.prop(dofu, "opacity_limits")
         row.prop(dofu, "segments_limits")
-        
-        row = col.row(align=True)
-        row.prop(dofu, "overlay", text="Overlay Limits", toggle=True)
         row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")
-
+        row = col.row(align=True)
+        row.prop(dofu, "overlay", text="Overlay Limits", toggle=True, icon="GHOST_ENABLED")
+        row.prop(dofu, "draw_focus", toggle=True, icon="FORCE_FORCE")
+        
         col = self.layout.column(align=True)
         col.label("Aperture:")
         row = col.row(align=True)
