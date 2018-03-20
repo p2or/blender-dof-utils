@@ -570,20 +570,16 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
 
         row = col.row(align=True)
         #split = row.split(.1,align=True)
-
         row.prop(dofu, "color_limits", text="")
-        
-        #row.prop(dofu, "segments_limits")
-        
+               
         row = col.row(align=True)
         row.prop(dofu, "size_limits")
         row.prop(dofu, "opacity_limits")
-        
         row.prop(dofu, "segments_limits")
         
         row = col.row(align=True)
         row.prop(dofu, "overlay", text="Overlay Limits", toggle=True)
-        row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")        
+        row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")
 
         col = self.layout.column(align=True)
         col.label("Aperture:")
