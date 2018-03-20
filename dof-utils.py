@@ -247,7 +247,7 @@ def draw_callback_3d(operator, context):
     line((1.0, 1.0, 1.0, 0.1), dof_loc, start)
     line((dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits), dof_loc_end, dof_loc)
 
-    if dofu.size_limits > 0:
+    if dofu.size_limits > 0.0:
         #draw_empty_by_matix(matrix=temp_matrix, offset=-near_limit, size=1)
         for i in [near_limit, far_limit]:
             draw_circle_by_matrix(
