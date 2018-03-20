@@ -596,16 +596,21 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
         row.operator("dof_utils.kill_visualization", icon="X", text="")
 
         row = col.row(align=True)
-        #split = row.split(.1,align=True)
+        #split = row.split(.07, align=True)
         row.prop(dofu, "color_limits", text="")
+        #row = split.row(align=True)
+    
         row = col.row(align=True)
         row.prop(dofu, "size_limits")
         row.prop(dofu, "opacity_limits")
         row.prop(dofu, "segments_limits")
         row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")
+        
         row = col.row(align=True)
         row.prop(dofu, "overlay", text="Overlay Limits", toggle=True, icon="GHOST_ENABLED")
         row.prop(dofu, "draw_focus", toggle=True, icon="FORCE_FORCE")
+        row = col.row(align=True)
+        #row.prop(dofu, "fill_limits", text="Reset", icon="FILE_REFRESH")
         
         col = self.layout.column(align=True)
         col.label("Aperture:")
