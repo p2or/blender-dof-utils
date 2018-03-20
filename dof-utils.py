@@ -261,7 +261,7 @@ def draw_callback_3d(operator, context):
     if dofu.draw_focus:
         draw_2d_empty_by_matix(
             matrix=temp_matrix,
-            offset=-cam.dof_distance, 
+            offset=-d, 
             size=dofu.size_limits,
             color=(dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits))
 
