@@ -114,7 +114,7 @@ class DofUtilsSettings(bpy.types.PropertyGroup):
 
     opacity_limits = bpy.props.FloatProperty(
         name="Opacity",
-        min=0.0, max=1.0,
+        min=0.1, max=1.0,
         step=1,
         default=0.9)
 
