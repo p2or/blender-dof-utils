@@ -98,7 +98,7 @@ class DofUtilsSettings(bpy.types.PropertyGroup):
     draw_focus = bpy.props.BoolProperty(
         name="Display Focus",
         description="Draw Focus",
-        default=True)
+        default=False)
 
     color_limits = bpy.props.FloatVectorProperty(  
        name="Color Limits",
