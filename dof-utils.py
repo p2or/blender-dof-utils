@@ -262,7 +262,7 @@ def draw_callback_3d(operator, context):
         draw_2d_empty_by_matix(
             matrix=temp_matrix,
             offset=-d, 
-            size=dofu.size_limits,
+            size=dofu.size_limits * 1.7,
             color=(dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits))
 
     # restore opengl defaults
