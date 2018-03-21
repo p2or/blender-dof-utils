@@ -63,8 +63,8 @@ class DofUtilsPreferences(bpy.types.AddonPreferences):
 
 class DofUtilsSettings(bpy.types.PropertyGroup):
 
-    _h_visualizer = None 
-    _h_instructions = None
+    _visualize_handle = None 
+    _instructions_handle = None
 
     use_cursor = bpy.props.BoolProperty(
         name="Use 3d Cursor Flag",
@@ -248,9 +248,9 @@ def draw_callback_3d(operator, context):
     line((dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits), dof_loc_end, dof_loc)
 
     if dofu.size_limits > 0.0:
-        #draw_empty_by_matix(matrix=temp_matrix, offset=-near_limit, size=1)
+        #draw_empty(matrix=temp_matrix, offset=-near_limit, size=1)
         for i in [near_limit, far_limit]:
-            draw_circle_by_matrix(
+            draw_circle(
                 matrix=temp_matrix, 
                 offset=-i, 
                 color=(dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits), 
@@ -259,7 +259,7 @@ def draw_callback_3d(operator, context):
                 num_segments=dofu.segments_limits)
 
     if dofu.draw_focus:
-        draw_2d_empty_by_matix(
+        draw_empty_2d(
             matrix=temp_matrix,
             offset=-d, 
             size=dofu.size_limits * 1.7,
@@ -310,7 +310,7 @@ def draw_line_3d(start, end, color=None, width=1):
     bgl.glEnd()
 
 '''
-def draw_empty_by_matix(matrix, size, offset=0, offset_axis="Z", color=None, width=1):
+def draw_empty(matrix, size, offset=0, offset_axis="Z", color=None, width=1):
     vector_list = [
         Vector((size, 0, 0)), Vector((-size, 0, 0)), # x
         Vector((0, size, 0)), Vector((0, -size, 0)), # y
@@ -327,7 +327,7 @@ def draw_empty_by_matix(matrix, size, offset=0, offset_axis="Z", color=None, wid
         draw_line_3d(origin, end)
 '''
 
-def draw_2d_empty_by_matix(matrix, size, offset=0, offset_axis="Z", color=None, width=1):
+def draw_empty_2d(matrix, size, offset=0, offset_axis="Z", color=None, width=1):
     vector_list = [
         Vector((size, 0, 0)), Vector((-size, 0, 0)), # x
         Vector((0, size, 0)), Vector((0, -size, 0))] # y
@@ -343,7 +343,7 @@ def draw_2d_empty_by_matix(matrix, size, offset=0, offset_axis="Z", color=None, 
         draw_line_3d(origin, end)
 
 # based on http://slabode.exofire.net/circle_draw.shtml
-def draw_circle_by_matrix(matrix, radius=.1, num_segments=16, offset=0, offset_axis="Z", color=None, width=1, fill=False):
+def draw_circle(matrix, radius=.1, num_segments=16, offset=0, offset_axis="Z", color=None, width=1, fill=False):
     #precalculate the sine and cosine
     theta = 2 * math.pi / num_segments
     c = math.cos(theta)
@@ -412,8 +412,8 @@ class DofUtilsFocusPicking(bpy.types.Operator):
         elif event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.use_cursor:
             dofu.use_cursor = False
             try:
-                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._h_instructions, 'WINDOW')
-                DofUtilsSettings._h_instructions = None
+                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
+                DofUtilsSettings._instructions_handle = None
             except:
                 pass
             self.redraw_viewports(context)
@@ -426,9 +426,9 @@ class DofUtilsFocusPicking(bpy.types.Operator):
         
         if not dofu.use_cursor:
             if context.space_data.type == 'VIEW_3D':
-                if prefs.display_info and not DofUtilsSettings._h_instructions:
+                if prefs.display_info and not DofUtilsSettings._instructions_handle:
                     args = (self, context)
-                    DofUtilsSettings._h_instructions = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
+                    DofUtilsSettings._instructions_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
                 
                 context.window_manager.modal_handler_add(self)
                 dofu.use_cursor = True
@@ -468,10 +468,10 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
         if event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.draw_dof:
             dofu.draw_dof = False
             try: # TODO, viewport class
-                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._h_visualizer, 'WINDOW')
-                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._h_instructions, 'WINDOW')
-                DofUtilsSettings._h_instructions = None
-                DofUtilsSettings._h_visualizer = None
+                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._visualize_handle, 'WINDOW')
+                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
+                DofUtilsSettings._instructions_handle = None
+                DofUtilsSettings._visualize_handle = None
             except:
                 pass
             context.area.header_text_set()
@@ -488,10 +488,10 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
             if context.area.type == 'VIEW_3D':
                 args = (self, context)
                 # Add the region OpenGL drawing callback, draw in view space with 'POST_VIEW' and 'PRE_VIEW'
-                DofUtilsSettings._h_visualizer = bpy.types.SpaceView3D.draw_handler_add(draw_callback_3d, args, 'WINDOW', 'POST_VIEW')
+                DofUtilsSettings._visualize_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_3d, args, 'WINDOW', 'POST_VIEW')
 
-                if prefs.display_info and not DofUtilsSettings._h_instructions:
-                    DofUtilsSettings._h_instructions = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
+                if prefs.display_info and not DofUtilsSettings._instructions_handle:
+                    DofUtilsSettings._instructions_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
                 
                 context.window_manager.modal_handler_add(self)
                 dofu.draw_dof = True
@@ -537,10 +537,10 @@ class DofUtilsResetViewport(bpy.types.Operator):
     # TODO, viewport class
     def execute(self, context):
         try: 
-            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._h_instructions, 'WINDOW')
-            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._h_visualizer, 'WINDOW')
-            DofUtilsSettings._h_instructions = None
-            DofUtilsSettings._h_visualizer = None
+            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
+            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._visualize_handle, 'WINDOW')
+            DofUtilsSettings._instructions_handle = None
+            DofUtilsSettings._visualize_handle = None
         except:
             pass
         return {'FINISHED'}
