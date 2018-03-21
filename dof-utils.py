@@ -21,7 +21,7 @@ bl_info = {
     "author": "Christian Brinkmann (p2or)",
     "description": "",
     "version": (0, 0, 7),
-    "blender": (2, 77, 0),
+    "blender": (2, 78, 0),
     "location": "3d View > Properties Panel > Depth of Field Utilities",
     "wiki_url": "https://github.com/p2or/blender-dof-utils",
     "tracker_url": "https://github.com/p2or/blender-dof-utils/issues",
@@ -604,12 +604,13 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
         row.prop(dofu, "size_limits")
         row.prop(dofu, "opacity_limits")
         row.prop(dofu, "segments_limits")
-        row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")
+        #row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")
         
         row = col.row(align=True)
         row.prop(dofu, "overlay", text="Overlay Limits", toggle=True, icon="GHOST_ENABLED")
         row.prop(dofu, "draw_focus", toggle=True, icon="FORCE_FORCE")
-        row = col.row(align=True)
+        row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")
+        #row = col.row(align=True)
         #row.prop(dofu, "fill_limits", text="Reset", icon="FILE_REFRESH")
         
         col = self.layout.column(align=True)
