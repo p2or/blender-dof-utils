@@ -21,7 +21,7 @@ bl_info = {
     "author": "Christian Brinkmann (p2or)",
     "description": "",
     "version": (0, 0, 7),
-    "blender": (2, 78, 0),
+    "blender": (2, 77, 0),
     "location": "3d View > Properties Panel > Depth of Field Utilities",
     "wiki_url": "https://github.com/p2or/blender-dof-utils",
     "tracker_url": "https://github.com/p2or/blender-dof-utils/issues",
@@ -639,7 +639,7 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
         col.prop(cam_ob, "dof_object", text="")
 
         col = self.layout.column(align=True)
-        cam_info = ["Name: {}".format(cam_ob.name)]
+        cam_info = ["Cam: {}".format(cam_ob.name)]
         if cam_ob.type == "PERSP":
             cam_info.append(" Lens: {:.2f}mm".format(cam_ob.lens))
         col.label(",".join(cam_info))
