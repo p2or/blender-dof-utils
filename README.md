@@ -2,9 +2,9 @@
 
 Prototype to visualize the [Depth of Field](https://en.wikipedia.org/wiki/Depth_of_field) limits within the *3d viewport*.
 
-![intro](https://giant.gfycat.com/PreciousAjarBedlingtonterrier.gif)
+![intro](https://i.stack.imgur.com/zXXbW.jpg)
 
-The Add-on also allows to set the focus distance by using the *3d Cursor*.
+In addition to that, the Add-on also allows to set the [focus distance](https://docs.blender.org/manual/en/dev/render/cycles/camera.html#focus) by using the *3d Cursor*.
 
 
 
