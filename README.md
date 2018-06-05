@@ -1,6 +1,6 @@
 ### Depth of Field Utilities 
 
-Prototype to visualize the [Depth of Field](https://en.wikipedia.org/wiki/Depth_of_field) limits within the *3d viewport*.
+Prototype to visualize the [Depth of Field](https://en.wikipedia.org/wiki/Depth_of_field) limits per camera in the *3d Viewport*.
 
 ![intro](https://i.stack.imgur.com/jYyag.jpg)
 
