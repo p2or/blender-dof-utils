@@ -129,9 +129,9 @@ class DofUtilsSettings(bpy.types.PropertyGroup):
 def is_camera(obj):
     return obj is not None and obj.type == 'CAMERA'
 
-def linear_distance(vector1, vector2):
-    a, b = sorted((vector1, vector2), key=lambda v: v.z, reverse=True)
-    return (b - a).length
+def distance(pt1, pt2):
+    pt_apex, pt_base = sorted((pt1, pt2), key=lambda v: v.z, reverse=True)
+    return (Vector((pt_apex.x, pt_apex.y, pt_base.z)) - pt_base).length
 
 def fstops(camera_data, magnification):
     """ Return or calculate f-stops (N) """
@@ -182,13 +182,13 @@ def dof_calculation(camera_data, dof_distance, magnification=1):
 
 def draw_callback_3d(operator, context):
 
-    scene = context.scene
-    dofu = scene.dof_utils
+    scn = context.scene
+    dofu = scn.dof_utils
 
     if is_camera(context.object):
         cam_ob = context.object
-    elif is_camera(scene.camera):
-        cam_ob = scene.camera
+    elif is_camera(scn.camera):
+        cam_ob = scn.camera
     else:
         return
 
@@ -406,7 +406,7 @@ class DofUtilsFocusPicking(bpy.types.Operator):
         if event.type == 'LEFTMOUSE': 
             if event.value == 'RELEASE':
                 context.object.data.dof_distance = \
-                    linear_distance(scene.cursor_location, context.object.location)
+                    distance(scene.cursor_location, context.object.matrix_world.to_translation())
             return {'PASS_THROUGH'}
         
         elif event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.use_cursor:
@@ -537,10 +537,11 @@ class DofUtilsResetViewport(bpy.types.Operator):
     # TODO, viewport class
     def execute(self, context):
         try: 
-            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
-            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._visualize_handle, 'WINDOW')
             DofUtilsSettings._instructions_handle = None
             DofUtilsSettings._visualize_handle = None
+            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
+            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._visualize_handle, 'WINDOW')
+            
         except:
             pass
         return {'FINISHED'}
@@ -571,7 +572,7 @@ class DofUtilsResetPreferences(bpy.types.Operator):
 #   UI
 # -------------------------------------------------------------------
 
-class depthOfFieldUtilitiesPanel(bpy.types.Panel):  
+class DepthOfFieldUtilitiesPanel(bpy.types.Panel):  
     bl_label = "Depth of Field Utilities"  
     bl_space_type = "VIEW_3D"  
     bl_region_type = "UI"  
@@ -653,14 +654,12 @@ class depthOfFieldUtilitiesPanel(bpy.types.Panel):
 def register():
     bpy.utils.register_module(__name__)
     bpy.types.Scene.dof_utils = bpy.props.PointerProperty(type=DofUtilsSettings)
-    #bpy.types.CyclesCamera_PT_dof.append(draw_dofutils)
 
 
 def unregister():
     bpy.ops.dof_utils.reset_preferences()
     bpy.utils.unregister_module(__name__)
     del bpy.types.Scene.dof_utils
-    #bpy.types.CyclesCamera_PT_dof.remove(draw_dofutils)
-    
+
 if __name__ == "__main__":
     register()
