@@ -19,9 +19,9 @@
 bl_info = {
     "name": "Depth of Field Utilities",
     "author": "Christian Brinkmann (p2or)",
-    "description": "",
-    "version": (0, 0, 7),
-    "blender": (2, 77, 0),
+    "description": "Displays depth of field in 3D view port.  Supports Blender 2.8.",
+    "version": (0, 0, 8),
+    "blender": (2, 80, 0),
     "location": "3d View > Properties Panel > Depth of Field Utilities",
     "wiki_url": "https://github.com/p2or/blender-dof-utils",
     "tracker_url": "https://github.com/p2or/blender-dof-utils/issues",
@@ -31,6 +31,8 @@ bl_info = {
 import bpy
 import bgl
 import blf
+import gpu
+from gpu_extras.batch import batch_for_shader
 import math
 from mathutils import Matrix, Vector
 from mathutils.geometry import intersect_point_line
@@ -199,25 +201,25 @@ def draw_callback_3d(operator, context):
     smat = Matrix()
     for i in range(3):
         smat[i][i] = target_scale[i]
-    temp_matrix = nmat * smat # cam_ob.matrix_world = nmat * smat
+    temp_matrix = nmat @ smat # cam_ob.matrix_world = nmat * smat
    
-    start = temp_matrix * Vector((0, 0, -cam.clip_start))
-    end = temp_matrix * Vector((0, 0, -cam.clip_end))
+    start = temp_matrix @ Vector((0, 0, -cam.clip_start))
+    end = temp_matrix @ Vector((0, 0, -cam.clip_end))
     d = cam.dof_distance
 
     if cam.dof_object is None:
         near_limit, far_limit = dof_calculation(cam, d)
-        dof_loc = temp_matrix * Vector((0, 0, -(near_limit)))
-        dof_loc_end = temp_matrix * Vector((0, 0, -(far_limit)))
+        dof_loc = temp_matrix @ Vector((0, 0, -(near_limit)))
+        dof_loc_end = temp_matrix @ Vector((0, 0, -(far_limit)))
         
     else:
         pt = cam.dof_object.matrix_world.translation
-        loc = intersect_point_line(pt, temp_matrix.translation, temp_matrix * Vector((0, 0, -1)))      
+        loc = intersect_point_line(pt, temp_matrix.translation, temp_matrix @ Vector((0, 0, -1)))      
         d = ((loc[0] - start).length) + cam.clip_start # respect the clipping start value
         
         near_limit, far_limit = dof_calculation(cam, d)
-        dof_loc = temp_matrix * Vector((0, 0, -(near_limit)))
-        dof_loc_end = temp_matrix * Vector((0, 0, -(far_limit)))
+        dof_loc = temp_matrix @ Vector((0, 0, -(near_limit)))
+        dof_loc_end = temp_matrix @ Vector((0, 0, -(far_limit)))
     
     dofu.limits = (d, near_limit, far_limit)
 
@@ -236,11 +238,17 @@ def draw_callback_3d(operator, context):
     bgl.glLineWidth(2)
 
     def line(color, start, end):
-        bgl.glColor4f(*color)
-        bgl.glBegin(bgl.GL_LINES)
-        bgl.glVertex3f(*start)
-        bgl.glVertex3f(*end)
-        bgl.glEnd()
+        vertices = [start,end]
+        shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        batch = batch_for_shader(shader,'LINE_STRIP', {"pos": vertices})
+        shader.bind()
+        shader.uniform_float("color",color)
+        batch.draw(shader)
+        #bgl.glColor4f(*color)
+        #bgl.glBegin(bgl.GL_LINES)
+        #bgl.glVertex3f(*start)
+        #bgl.glVertex3f(*end)
+        #bgl.glEnd()
     
     # define the lines
     line((1.0, 1.0, 1.0, 0.1), dof_loc_end, end)
@@ -270,7 +278,7 @@ def draw_callback_3d(operator, context):
     bgl.glDisable(bgl.GL_BLEND)
     bgl.glDisable(bgl.GL_LINE_SMOOTH)
     bgl.glEnable(bgl.GL_DEPTH_TEST)
-    bgl.glColor4f(0.0, 0.0, 0.0, 1.0)
+    #bgl.glColor4f(0.0, 0.0, 0.0, 1.0)
 
 
 def draw_string(x, y, packed_strings):
@@ -278,7 +286,7 @@ def draw_string(x, y, packed_strings):
     blf.size(font_id, 17, 70) 
     x_offset = 0
     for pstr, pcol in packed_strings:
-        bgl.glColor4f(*pcol)
+        #bgl.glColor4f(*pcol)
         text_width, text_height = blf.dimensions(font_id, pstr)
         blf.position(font_id, (x + x_offset), y, 0)
         blf.draw(font_id, pstr)
@@ -302,7 +310,7 @@ def draw_callback_2d(operator, context):
 
 def draw_line_3d(start, end, color=None, width=1):
     color = (0.0, 0.0, 0.0, 1.0) if color is None else color
-    bgl.glColor4f(*color)
+    #bgl.glColor4f(*color)
     bgl.glLineWidth(width)
     bgl.glBegin(bgl.GL_LINES)
     bgl.glVertex3f(*start)
@@ -364,16 +372,21 @@ def draw_circle(matrix, radius=.1, num_segments=16, offset=0, offset_axis="Z", c
         'Z': Vector((0, 0, offset))}
         
     color = (0.0, 0.0, 0.0, 1.0) if color is None else color
-    bgl.glColor4f(*color)
-    bgl.glLineWidth(width)
-    if not fill: # bgl.GL_TRIANGLE_FAN, http://www.glprogramming.com/red/chapter02.html
-        bgl.glBegin(bgl.GL_LINE_LOOP)
-    else:
-        bgl.glBegin(bgl.GL_TRIANGLE_FAN)
-    for v in vector_list:
-        coord = matrix * (v + translate[offset_axis])
-        bgl.glVertex3f(*coord)
-    bgl.glEnd()
+    shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+    batch = batch_for_shader(shader,'LINE_STRIP', {"pos": vector_list})
+    shader.bind()
+    shader.uniform_float("color",color)
+    batch.draw(shader)
+    #bgl.glColor4f(*color)
+    #bgl.glLineWidth(width)
+    #if not fill: # bgl.GL_TRIANGLE_FAN, http://www.glprogramming.com/red/chapter02.html
+    #    bgl.glBegin(bgl.GL_LINE_LOOP)
+    #else:
+    #    bgl.glBegin(bgl.GL_TRIANGLE_FAN)
+    #for v in vector_list:
+    #    coord = matrix * (v + translate[offset_axis])
+    #    bgl.glVertex3f(*coord)
+    #bgl.glEnd()
 
 
 # -------------------------------------------------------------------
@@ -401,7 +414,7 @@ class DofUtilsFocusPicking(bpy.types.Operator):
         context.area.tag_redraw()
         scene = context.scene
         dofu = scene.dof_utils
-        prefs = context.user_preferences.addons[__name__].preferences
+        prefs = context.preferences.addons[__name__].preferences
 
         if event.type == 'LEFTMOUSE': 
             if event.value == 'RELEASE':
@@ -422,7 +435,7 @@ class DofUtilsFocusPicking(bpy.types.Operator):
     
     def invoke(self, context, event):
         dofu = context.scene.dof_utils #context.area.tag_redraw()
-        prefs = context.user_preferences.addons[__name__].preferences
+        prefs = context.preferences.addons[__name__].preferences
         
         if not dofu.use_cursor:
             if context.space_data.type == 'VIEW_3D':
@@ -442,7 +455,7 @@ class DofUtilsFocusPicking(bpy.types.Operator):
 
 
 class DofUtilsVisualizeLimits(bpy.types.Operator):
-    """ Draws depth of field in the vieport via OpenGL """
+    """ Draws depth of field in the viewport via OpenGL """
     bl_idname = "dof_utils.visualize_dof"
     bl_label = "Visualize Depth of Field"
     bl_description = "Draws depth of field in the vieport via OpenGL"
@@ -460,7 +473,7 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
     def modal(self, context, event):
         context.area.tag_redraw()
         dofu = context.scene.dof_utils
-        prefs = context.user_preferences.addons[__name__].preferences
+        prefs = context.preferences.addons[__name__].preferences
 
         if prefs.display_limits:
             context.area.header_text_set("Focus Distance: %.3f Near Limit: %.3f Far Limit: %.3f" % tuple(dofu.limits))
@@ -482,7 +495,7 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
                
     def invoke(self, context, event):
         dofu = context.scene.dof_utils
-        prefs = context.user_preferences.addons[__name__].preferences
+        prefs = context.preferences.addons[__name__].preferences
 
         if not dofu.draw_dof:
             if context.area.type == 'VIEW_3D':
@@ -556,7 +569,7 @@ class DofUtilsResetPreferences(bpy.types.Operator):
     def execute(self, context):
         scn = context.scene
         dofu = scn.dof_utils
-        prefs = context.user_preferences.addons[__name__].preferences
+        prefs = context.preferences.addons[__name__].preferences
         prefs.property_unset("display_info")
         prefs.property_unset("display_limits")
         dofu.property_unset("use_cursor")
@@ -610,12 +623,12 @@ class DepthOfFieldUtilitiesPanel(bpy.types.Panel):
         row = col.row(align=True)
         row.prop(dofu, "overlay", text="Overlay Limits", toggle=True, icon="GHOST_ENABLED")
         row.prop(dofu, "draw_focus", toggle=True, icon="FORCE_FORCE")
-        row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")
+        row.prop(dofu, "fill_limits", text="")#, icon="META_EMPTY")
         #row = col.row(align=True)
         #row.prop(dofu, "fill_limits", text="Reset", icon="FILE_REFRESH")
         
         col = self.layout.column(align=True)
-        col.label("Aperture:")
+        col.label(text="Aperture:")
         row = col.row(align=True)
         row.prop(ccam, "aperture_type", expand=True)
         if ccam.aperture_type == 'RADIUS':
@@ -624,12 +637,12 @@ class DepthOfFieldUtilitiesPanel(bpy.types.Panel):
             col.prop(ccam, "aperture_fstop", text="Number")
 
         col = self.layout.column(align=True)
-        col.label("Focus:")
+        col.label(text="Focus:")
         row = col.row(align=True)
         pic = row.row(align=True)
         active_flag = not dofu.use_cursor and cam_ob.dof_object is None
         pic.enabled = active_flag # enabled
-        pic.operator("dof_utils.focus_picking", icon="CURSOR" if active_flag or cam_ob.dof_object else "REC")
+        pic.operator("dof_utils.focus_picking", icon="RESTRICT_SELECT_OFF" if active_flag or cam_ob.dof_object else "REC")
         row = row.row(align=True) #layout.prop_search(dofu, "camera", bpy.data, "cameras")
         row.enabled = cam_ob.dof_object is None
         row.operator("dof_utils.kill_focus_picking", icon="X", text="")
@@ -643,7 +656,7 @@ class DepthOfFieldUtilitiesPanel(bpy.types.Panel):
         cam_info = ["Cam: {}".format(cam_ob.name)]
         if cam_ob.type == "PERSP":
             cam_info.append(" Lens: {:.2f}mm".format(cam_ob.lens))
-        col.label(",".join(cam_info))
+        col.label(text=",".join(cam_info))
         #self.layout.separator()
 
 
@@ -652,13 +665,30 @@ class DepthOfFieldUtilitiesPanel(bpy.types.Panel):
 # -------------------------------------------------------------------
 
 def register():
-    bpy.utils.register_module(__name__)
+    #bpy.utils.register_module(__name__)
+    bpy.utils.register_class(DofUtilsPreferences)
+    bpy.utils.register_class(DofUtilsFocusPicking)
+    bpy.utils.register_class(DofUtilsVisualizeLimits)
+    bpy.utils.register_class(DofUtilsKillVisualization)
+    bpy.utils.register_class(DofUtilsKillFocusPicking)
+    bpy.utils.register_class(DofUtilsResetViewport)
+    bpy.utils.register_class(DofUtilsResetPreferences)
+    bpy.utils.register_class(DepthOfFieldUtilitiesPanel)
+    bpy.utils.register_class(DofUtilsSettings)
     bpy.types.Scene.dof_utils = bpy.props.PointerProperty(type=DofUtilsSettings)
-
 
 def unregister():
     bpy.ops.dof_utils.reset_preferences()
-    bpy.utils.unregister_module(__name__)
+    bpy.utils.unregister_class(DofUtilsPreferences)
+    bpy.utils.unregister_class(DofUtilsFocusPicking)
+    bpy.utils.unregister_class(DofUtilsVisualizeLimits)
+    bpy.utils.unregister_class(DofUtilsKillVisualization)
+    bpy.utils.unregister_class(DofUtilsKillFocusPicking)
+    bpy.utils.unregister_class(DofUtilsResetViewport)
+    bpy.utils.unregister_class(DofUtilsResetPreferences)
+    bpy.utils.unregister_class(DepthOfFieldUtilitiesPanel)
+    bpy.utils.unregister_class(DofUtilsSettings)
+    #bpy.utils.unregister_module(__name__)
     del bpy.types.Scene.dof_utils
 
 if __name__ == "__main__":
