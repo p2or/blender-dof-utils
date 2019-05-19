@@ -306,16 +306,26 @@ def draw_callback_2d(operator, context):
         ("when done", WHITE)
         ]
     draw_string(x, y, ps)
- 
 
-def draw_line_3d(start, end, color=None, width=1):
-    color = (0.0, 0.0, 0.0, 1.0) if color is None else color
-    #bgl.glColor4f(*color)
+def draw_poly(coords, color, width):
+    # Get shader
+    shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+    # Create batch process
+    batch = batch_for_shader(shader,'LINE_STRIP', {"pos": coords})
+    # Set the line width
     bgl.glLineWidth(width)
-    bgl.glBegin(bgl.GL_LINES)
-    bgl.glVertex3f(*start)
-    bgl.glVertex3f(*end)
-    bgl.glEnd()
+    shader.bind()
+    # Set color
+    shader.uniform_float("color",color)
+    # Draw line
+    batch.draw(shader)
+
+    
+# Draws a line on the view port being two points
+def draw_line_3d(start, end, color=None, width=1):
+    # Use default color or color given if possible
+    color = (0.0, 0.0, 0.0, 1.0) if color is None else color
+    draw_poly([start,end], color, width)
 
 '''
 def draw_empty(matrix, size, offset=0, offset_axis="Z", color=None, width=1):
@@ -345,9 +355,9 @@ def draw_empty_2d(matrix, size, offset=0, offset_axis="Z", color=None, width=1):
         'Y': Vector((0, offset, 0)), 
         'Z': Vector((0, 0, offset))}
     
-    origin = matrix * translate[offset_axis] #origin = matrix * Vector((0, 0, 0))
+    origin = matrix @ translate[offset_axis] #origin = matrix * Vector((0, 0, 0))
     for v in vector_list:
-        end = matrix * (v + translate[offset_axis])
+        end = matrix @ (v + translate[offset_axis])
         draw_line_3d(origin, end)
 
 # based on http://slabode.exofire.net/circle_draw.shtml
@@ -371,22 +381,16 @@ def draw_circle(matrix, radius=.1, num_segments=16, offset=0, offset_axis="Z", c
         'Y': Vector((0, offset, 0)), 
         'Z': Vector((0, 0, offset))}
         
-    color = (0.0, 0.0, 0.0, 1.0) if color is None else color
-    shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
-    batch = batch_for_shader(shader,'LINE_STRIP', {"pos": vector_list})
-    shader.bind()
-    shader.uniform_float("color",color)
-    batch.draw(shader)
-    #bgl.glColor4f(*color)
-    #bgl.glLineWidth(width)
     #if not fill: # bgl.GL_TRIANGLE_FAN, http://www.glprogramming.com/red/chapter02.html
     #    bgl.glBegin(bgl.GL_LINE_LOOP)
     #else:
     #    bgl.glBegin(bgl.GL_TRIANGLE_FAN)
-    #for v in vector_list:
-    #    coord = matrix * (v + translate[offset_axis])
-    #    bgl.glVertex3f(*coord)
-    #bgl.glEnd()
+    draw_points = []
+    for v in vector_list:
+        coord = matrix @ (v + translate[offset_axis])
+        draw_points.append(coord)
+    
+    draw_poly(draw_points, color, width)
 
 
 # -------------------------------------------------------------------
@@ -487,7 +491,7 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
                 DofUtilsSettings._visualize_handle = None
             except:
                 pass
-            context.area.header_text_set()
+            context.area.header_text_set(text="")
             self.redraw_viewports(context)
             return {'CANCELLED'}
         
