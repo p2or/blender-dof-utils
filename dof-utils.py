@@ -20,7 +20,7 @@ bl_info = {
     "name": "Depth of Field Utilities",
     "author": "Christian Brinkmann (p2or)",
     "description": "Displays depth of field in 3D view port.  Supports Blender 2.8.",
-    "version": (0, 0, 8),
+    "version": (0, 0, 9),
     "blender": (2, 80, 0),
     "location": "3d View > Properties Panel > Depth of Field Utilities",
     "wiki_url": "https://github.com/p2or/blender-dof-utils",
@@ -137,14 +137,15 @@ def distance(pt1, pt2):
 
 def fstops(camera_data, magnification):
     """ Return or calculate f-stops (N) """
-    if camera_data.cycles.aperture_type == 'RADIUS':
-        #print("Radius:", ((cam.lens / cam.cycles.aperture_fstop) / 2000))
-        if camera_data.cycles.aperture_size > 0.00001: # division by zero fix
-            return ((camera_data.lens /1000 * magnification) / (camera_data.cycles.aperture_size *2))
-        else:
-            return camera_data.clip_end
-    else:
-        return camera_data.cycles.aperture_fstop
+    # Following lines rem as radius option not exist
+    #if camera_data.cycles.aperture_type == 'RADIUS':
+    #    #print("Radius:", ((cam.lens / cam.cycles.aperture_fstop) / 2000))
+    #    if camera_data.cycles.aperture_size > 0.00001: # division by zero fix
+    #        return ((camera_data.lens /1000 * magnification) / (camera_data.cycles.aperture_size *2))
+    #    else:
+    #        return camera_data.clip_end
+    #else:
+    return camera_data.dof.aperture_fstop #.cycles.aperture_fstop
        
 def dof_calculation(camera_data, dof_distance, magnification=1):
     # https://en.wikipedia.org/wiki/Depth_of_focus#Calculation
@@ -205,15 +206,15 @@ def draw_callback_3d(operator, context):
    
     start = temp_matrix @ Vector((0, 0, -cam.clip_start))
     end = temp_matrix @ Vector((0, 0, -cam.clip_end))
-    d = cam.dof_distance
+    d = cam.dof.focus_distance
 
-    if cam.dof_object is None:
+    if cam.dof.focus_object is None:
         near_limit, far_limit = dof_calculation(cam, d)
         dof_loc = temp_matrix @ Vector((0, 0, -(near_limit)))
         dof_loc_end = temp_matrix @ Vector((0, 0, -(far_limit)))
         
     else:
-        pt = cam.dof_object.matrix_world.translation
+        pt = cam.dof.focus_object.matrix_world.translation
         loc = intersect_point_line(pt, temp_matrix.translation, temp_matrix @ Vector((0, 0, -1)))      
         d = ((loc[0] - start).length) + cam.clip_start # respect the clipping start value
         
@@ -634,27 +635,28 @@ class DepthOfFieldUtilitiesPanel(bpy.types.Panel):
         col = self.layout.column(align=True)
         col.label(text="Aperture:")
         row = col.row(align=True)
-        row.prop(ccam, "aperture_type", expand=True)
-        if ccam.aperture_type == 'RADIUS':
-            col.prop(ccam, "aperture_size", text="Size")
-        elif ccam.aperture_type == 'FSTOP':
-            col.prop(ccam, "aperture_fstop", text="Number")
+        #row.prop(ccam, "aperture_type", expand=True)
+        # Following lines rem as radius option not exist
+        #if ccam.aperture_type == 'RADIUS':
+        #    col.prop(ccam, "aperture_size", text="Size")
+        #elif ccam.aperture_type == 'FSTOP':
+        col.prop(cam_ob.dof, "aperture_fstop", text="Number")
 
         col = self.layout.column(align=True)
         col.label(text="Focus:")
         row = col.row(align=True)
         pic = row.row(align=True)
-        active_flag = not dofu.use_cursor and cam_ob.dof_object is None
+        active_flag = not dofu.use_cursor and cam_ob.dof.focus_object is None
         pic.enabled = active_flag # enabled
-        pic.operator("dof_utils.focus_picking", icon="RESTRICT_SELECT_OFF" if active_flag or cam_ob.dof_object else "REC")
+        pic.operator("dof_utils.focus_picking", icon="RESTRICT_SELECT_OFF" if active_flag or cam_ob.dof.focus_object else "REC")
         row = row.row(align=True) #layout.prop_search(dofu, "camera", bpy.data, "cameras")
-        row.enabled = cam_ob.dof_object is None
+        row.enabled = cam_ob.dof.focus_object is None
         row.operator("dof_utils.kill_focus_picking", icon="X", text="")
         row = col.row(align=True)
         dis = row.row(align=True)
         dis.enabled = active_flag # active
-        dis.prop(cam_ob, "dof_distance", text="Distance")
-        col.prop(cam_ob, "dof_object", text="")
+        dis.prop(cam_ob.dof, "focus_distance", text="Distance")
+        col.prop(cam_ob.dof, "focus_object", text="")
 
         col = self.layout.column(align=True)
         cam_info = ["Cam: {}".format(cam_ob.name)]
