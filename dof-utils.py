@@ -38,19 +38,19 @@ from mathutils import Matrix, Vector
 from mathutils.geometry import intersect_point_line
 
 
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
 #   Preferences & Scene Properties
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
 class DofUtilsPreferences(bpy.types.AddonPreferences):
 
     bl_idname = __name__
     
-    display_info = bpy.props.BoolProperty(
+    display_info : bpy.props.BoolProperty(
             name="Display Infos in Viewport",
             default = True)
     
-    display_limits = bpy.props.BoolProperty(
+    display_limits : bpy.props.BoolProperty(
         name="Display Limits in Viewport Header",
         description="Displays distance, near & far limits in viewport header",
         default = True)
@@ -68,65 +68,65 @@ class DofUtilsSettings(bpy.types.PropertyGroup):
     _visualize_handle = None 
     _instructions_handle = None
 
-    use_cursor = bpy.props.BoolProperty(
+    use_cursor : bpy.props.BoolProperty(
         name="Use 3d Cursor Flag",
         description="",
         default=False,
         options={'SKIP_SAVE'})
 
-    draw_dof = bpy.props.BoolProperty(
+    draw_dof : bpy.props.BoolProperty(
         name="Draw DoF Flag",
         description="",
         default=False,
         options={'SKIP_SAVE'})
     
-    overlay = bpy.props.BoolProperty(
+    overlay : bpy.props.BoolProperty(
         name="Line overlay",
         description="Display DoF above all other Elements",
         default=True)
 
-    size_limits = bpy.props.FloatProperty(
+    size_limits : bpy.props.FloatProperty(
         name="Size",
         description="Limit Radius",
         min=0.0,
         step=1,
         default=0.1)
 
-    fill_limits = bpy.props.BoolProperty(
+    fill_limits : bpy.props.BoolProperty(
         name="Fill limits",
         description="Fill Limits",
         default=False)
     
-    draw_focus = bpy.props.BoolProperty(
+    draw_focus : bpy.props.BoolProperty(
         name="Display Focus",
         description="Draw Focus",
         default=False)
 
-    color_limits = bpy.props.FloatVectorProperty(  
+    color_limits : bpy.props.FloatVectorProperty(  
        name="Color Limits",
        subtype='COLOR',
        default=(0.0, 1.0, 0.0),
        min=0.0, max=1.0,
        description="color picker")
 
-    segments_limits = bpy.props.IntProperty(  
+    segments_limits : bpy.props.IntProperty(  
        name="Segments",
        default=16,
        min=3, max=32)
 
-    opacity_limits = bpy.props.FloatProperty(
+    opacity_limits : bpy.props.FloatProperty(
         name="Opacity",
         min=0.1, max=1.0,
         step=1,
         default=0.9)
 
-    limits = bpy.props.FloatVectorProperty(
+    limits : bpy.props.FloatVectorProperty(
             name="Limits",
             size=3)
     
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
 #   Helper
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
 def is_camera(obj):
     return obj is not None and obj.type == 'CAMERA'
@@ -179,9 +179,9 @@ def dof_calculation(camera_data, dof_distance, magnification=1):
     return (nL, fL)
 
 
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
 #   OpenGL callbacks
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
 
 def draw_callback_3d(operator, context):
 
@@ -371,7 +371,7 @@ def draw_circle(matrix, radius=.1, num_segments=16, offset=0, offset_axis="Z", c
     y = 0
     
     vector_list = []
-    for i in range (num_segments):
+    for i in range (num_segments+1):
         vector_list.append(Vector((x, y, 0))) # output vertex
         t = x
         x = c * x - s * y
@@ -394,9 +394,9 @@ def draw_circle(matrix, radius=.1, num_segments=16, offset=0, offset_axis="Z", c
     draw_poly(draw_points, color, width)
 
 
-# -------------------------------------------------------------------
-#   Operators    
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
+#    Operators
+# ------------------------------------------------------------------------
 
 class DofUtilsFocusPicking(bpy.types.Operator):
     """Sets the focus distance by using the 3d cursor"""
@@ -407,8 +407,8 @@ class DofUtilsFocusPicking(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        rd = context.scene.render
-        return is_camera(context.object) and rd.engine == "CYCLES"
+        #rd = context.scene.render
+        return is_camera(context.object)# and rd.engine == "CYCLES"
 
     def redraw_viewports(self, context):
         for area in context.screen.areas:
@@ -423,8 +423,8 @@ class DofUtilsFocusPicking(bpy.types.Operator):
 
         if event.type == 'LEFTMOUSE': 
             if event.value == 'RELEASE':
-                context.object.data.dof_distance = \
-                    distance(scene.cursor_location, context.object.matrix_world.to_translation())
+                context.object.data.dof.focus_distance = \
+                    distance(scene.cursor.location, context.object.matrix_world.to_translation())
             return {'PASS_THROUGH'}
         
         elif event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.use_cursor:
@@ -467,8 +467,8 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        rd = context.scene.render
-        return is_camera(context.object) and rd.engine == "CYCLES"
+        #rd = context.scene.render
+        return is_camera(context.object) #and rd.engine == "CYCLES"
 
     def redraw_viewports(self, context):
         for area in context.screen.areas:
@@ -492,7 +492,7 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
                 DofUtilsSettings._visualize_handle = None
             except:
                 pass
-            context.area.header_text_set(text="")
+            context.area.header_text_set(text=None)
             self.redraw_viewports(context)
             return {'CANCELLED'}
         
@@ -586,26 +586,31 @@ class DofUtilsResetPreferences(bpy.types.Operator):
         return {'FINISHED'}
 
 
-# -------------------------------------------------------------------
-#   UI
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
+#    UI
+# ------------------------------------------------------------------------
 
-class DepthOfFieldUtilitiesPanel(bpy.types.Panel):  
+class DOFU_PT_main_panel(bpy.types.Panel):  
     bl_label = "Depth of Field Utilities"  
     bl_space_type = "VIEW_3D"  
-    bl_region_type = "UI"  
+    bl_region_type = "UI"
+    bl_category = "Depth of Field Utilities"
     
     @classmethod
     def poll(cls, context):
-        rd = context.scene.render
-        return is_camera(context.object) and rd.engine == "CYCLES"
+        #rd = context.scene.render
+        return is_camera(context.object)# and rd.engine == "CYCLES"
     
     def draw(self, context):
         scene = context.scene
         dofu = scene.dof_utils #cam_ob = scene.camera.data
         cam_ob = context.active_object.data
-        ccam = cam_ob.cycles
+        #ccam = cam_ob.cycles
         
+        row = self.layout.row()
+        row.prop(cam_ob.dof, "use_dof", text="Enable Depth of Field", toggle=True)
+        self.layout.separator()
+
         col = self.layout.column(align=True)
         row = col.row(align=True)
         viz = row.row(align=True)
@@ -628,7 +633,7 @@ class DepthOfFieldUtilitiesPanel(bpy.types.Panel):
         row = col.row(align=True)
         row.prop(dofu, "overlay", text="Overlay Limits", toggle=True, icon="GHOST_ENABLED")
         row.prop(dofu, "draw_focus", toggle=True, icon="FORCE_FORCE")
-        row.prop(dofu, "fill_limits", text="")#, icon="META_EMPTY")
+        #row.prop(dofu, "fill_limits", text="", icon="PROP_ON")
         #row = col.row(align=True)
         #row.prop(dofu, "fill_limits", text="Reset", icon="FILE_REFRESH")
         
@@ -663,38 +668,40 @@ class DepthOfFieldUtilitiesPanel(bpy.types.Panel):
         if cam_ob.type == "PERSP":
             cam_info.append(" Lens: {:.2f}mm".format(cam_ob.lens))
         col.label(text=",".join(cam_info))
-        #self.layout.separator()
+        self.layout.separator()
 
 
-# -------------------------------------------------------------------
-#   Register
-# -------------------------------------------------------------------
+# ------------------------------------------------------------------------
+#    Registration
+# ------------------------------------------------------------------------
+
+classes = (
+    DofUtilsPreferences,
+    DofUtilsFocusPicking,
+    DofUtilsVisualizeLimits,
+    DofUtilsKillVisualization,
+    DofUtilsKillFocusPicking,
+    DofUtilsResetViewport,
+    DofUtilsResetPreferences,
+    DOFU_PT_main_panel,
+    DofUtilsSettings
+)
+
 
 def register():
-    #bpy.utils.register_module(__name__)
-    bpy.utils.register_class(DofUtilsPreferences)
-    bpy.utils.register_class(DofUtilsFocusPicking)
-    bpy.utils.register_class(DofUtilsVisualizeLimits)
-    bpy.utils.register_class(DofUtilsKillVisualization)
-    bpy.utils.register_class(DofUtilsKillFocusPicking)
-    bpy.utils.register_class(DofUtilsResetViewport)
-    bpy.utils.register_class(DofUtilsResetPreferences)
-    bpy.utils.register_class(DepthOfFieldUtilitiesPanel)
-    bpy.utils.register_class(DofUtilsSettings)
+    from bpy.utils import register_class
+    for cls in classes:
+        register_class(cls)
+
     bpy.types.Scene.dof_utils = bpy.props.PointerProperty(type=DofUtilsSettings)
 
 def unregister():
     bpy.ops.dof_utils.reset_preferences()
-    bpy.utils.unregister_class(DofUtilsPreferences)
-    bpy.utils.unregister_class(DofUtilsFocusPicking)
-    bpy.utils.unregister_class(DofUtilsVisualizeLimits)
-    bpy.utils.unregister_class(DofUtilsKillVisualization)
-    bpy.utils.unregister_class(DofUtilsKillFocusPicking)
-    bpy.utils.unregister_class(DofUtilsResetViewport)
-    bpy.utils.unregister_class(DofUtilsResetPreferences)
-    bpy.utils.unregister_class(DepthOfFieldUtilitiesPanel)
-    bpy.utils.unregister_class(DofUtilsSettings)
-    #bpy.utils.unregister_module(__name__)
+    
+    from bpy.utils import unregister_class
+    for cls in reversed(classes):
+        unregister_class(cls)
+    
     del bpy.types.Scene.dof_utils
 
 if __name__ == "__main__":
