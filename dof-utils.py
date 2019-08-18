@@ -19,10 +19,10 @@
 bl_info = {
     "name": "Depth of Field Utilities",
     "author": "Christian Brinkmann (p2or)",
-    "description": "Displays depth of field in 3D view port.  Supports Blender 2.8.",
+    "description": "Displays depth of field in 3D view port.",
     "version": (0, 0, 9),
     "blender": (2, 80, 0),
-    "location": "3d View > Properties Panel > Depth of Field Utilities",
+    "location": "3d View > Properties Panel (N) > Depth of Field Utilities",
     "wiki_url": "https://github.com/p2or/blender-dof-utils",
     "tracker_url": "https://github.com/p2or/blender-dof-utils/issues",
     "category": "Render"
@@ -594,7 +594,7 @@ class DOFU_PT_main_panel(bpy.types.Panel):
     bl_label = "Depth of Field Utilities"  
     bl_space_type = "VIEW_3D"  
     bl_region_type = "UI"
-    bl_category = "Depth of Field Utilities"
+    bl_category = "DoF Utils"
     
     @classmethod
     def poll(cls, context):
