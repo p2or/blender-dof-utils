@@ -505,7 +505,6 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
     def invoke(self, context, event):
         dofu = context.scene.dof_utils
         prefs = context.preferences.addons[__name__].preferences
-        print('invoke')
         if not dofu.draw_dof:
             if context.area.type == 'VIEW_3D':
                 args = (self, context)
@@ -705,7 +704,7 @@ classes = (
     DofUtilsResetViewport,
     DofUtilsResetPreferences,
     DOFU_PT_main_panel,
-    DofUtilsSettings,
+    DofUtilsSettings
 )
 
 
