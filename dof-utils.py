@@ -20,7 +20,7 @@ bl_info = {
     "name": "Depth of Field Utilities",
     "author": "Christian Brinkmann (p2or)",
     "description": "Displays depth of field in 3D view port.",
-    "version": (0, 0, 9),
+    "version": (0, 0, 10),
     "blender": (2, 80, 0),
     "location": "3d View > Properties Panel (N) > Depth of Field Utilities",
     "wiki_url": "https://github.com/p2or/blender-dof-utils",
@@ -464,7 +464,7 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
     bl_idname = "dof_utils.visualize_dof"
     bl_label = "Visualize Depth of Field"
     bl_description = "Draws depth of field in the vieport via OpenGL"
-
+    
     @classmethod
     def poll(cls, context):
         #rd = context.scene.render
@@ -474,34 +474,38 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
         for area in context.screen.areas:
             if area.type == 'VIEW_3D':
                 area.tag_redraw()
-
+                
     def modal(self, context, event):
-        context.area.tag_redraw()
-        dofu = context.scene.dof_utils
-        prefs = context.preferences.addons[__name__].preferences
+        #if not context is None and not context.area is None and context.area.type == 'VIEW_3D':
+        #    context.area.tag_redraw()
+        #    dofu = context.scene.dof_utils
+        #    prefs = context.preferences.addons[__name__].preferences
 
-        if prefs.display_limits:
-            context.area.header_text_set("Focus Distance: %.3f Near Limit: %.3f Far Limit: %.3f" % tuple(dofu.limits))
-
-        if event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.draw_dof:
-            dofu.draw_dof = False
-            try: # TODO, viewport class
-                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._visualize_handle, 'WINDOW')
-                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
-                DofUtilsSettings._instructions_handle = None
-                DofUtilsSettings._visualize_handle = None
-            except:
-                pass
-            context.area.header_text_set(text=None)
-            self.redraw_viewports(context)
-            return {'CANCELLED'}
-        
+        #    if prefs.display_limits:
+        #        context.area.header_text_set("Focus Distance: %.3f Near Limit: %.3f Far Limit: %.3f" % tuple(dofu.limits))
+                
+        #    if event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.draw_dof:
+        #        dofu.draw_dof = False
+        #        try: # TODO, viewport class
+        #            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._visualize_handle, 'WINDOW')
+        #            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
+        #            DofUtilsSettings._instructions_handle = None
+        #            DofUtilsSettings._visualize_handle = None
+        #        except:
+        #            pass
+        #        context.area.header_text_set(text=None)
+        #        self.redraw_viewports(context)
+        #        return {'CANCELLED'}
+        #    print('passed')
+        #    return {'PASS_THROUGH'}
+        #else:
+        #    print('skip')
         return {'PASS_THROUGH'}
                
     def invoke(self, context, event):
         dofu = context.scene.dof_utils
         prefs = context.preferences.addons[__name__].preferences
-
+        print('invoke')
         if not dofu.draw_dof:
             if context.area.type == 'VIEW_3D':
                 args = (self, context)
@@ -529,9 +533,26 @@ class DofUtilsKillVisualization(bpy.types.Operator):
     bl_idname = "dof_utils.kill_visualization"
     bl_label = "Kill Visualization"
     bl_description = "Kills Viewport Visualization"
-
+    
+    def redraw_viewports(self, context):
+        for area in context.screen.areas:
+            if area.type == 'VIEW_3D':
+                area.tag_redraw()
+                
     def execute(self, context):
         context.scene.dof_utils.draw_dof = False
+        try:
+            if not DofUtilsSettings._visualize_handle is None:
+                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._visualize_handle, 'WINDOW')
+        except:
+            pass
+            
+        try:
+            if not DofUtilsSettings._instructions_handle is None:
+                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
+        except:
+            pass
+        self.redraw_viewports(context);
         return {'FINISHED'}
 
 
@@ -684,7 +705,7 @@ classes = (
     DofUtilsResetViewport,
     DofUtilsResetPreferences,
     DOFU_PT_main_panel,
-    DofUtilsSettings
+    DofUtilsSettings,
 )
 
 
