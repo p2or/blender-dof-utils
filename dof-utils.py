@@ -405,10 +405,11 @@ class DofUtilsFocusPicking(bpy.types.Operator):
     bl_description = "Sets the focus distance by using the 3d cursor"
     bl_options = {'REGISTER', 'UNDO'}
 
+    _tool = None
+
     @classmethod
     def poll(cls, context):
-        #rd = context.scene.render
-        return is_camera(context.object)# and rd.engine == "CYCLES"
+        return is_camera(context.object)
 
     def redraw_viewports(self, context):
         for area in context.screen.areas:
@@ -421,6 +422,8 @@ class DofUtilsFocusPicking(bpy.types.Operator):
         dofu = scene.dof_utils
         prefs = context.preferences.addons[__name__].preferences
 
+        # Set cursor tool
+        bpy.ops.wm.tool_set_by_id(name ="builtin.cursor")
         if event.type == 'LEFTMOUSE': 
             if event.value == 'RELEASE':
                 context.object.data.dof.focus_distance = \
@@ -434,16 +437,24 @@ class DofUtilsFocusPicking(bpy.types.Operator):
                 DofUtilsSettings._instructions_handle = None
             except:
                 pass
+            # Reset to selected tool before running the operator
+            bpy.ops.wm.tool_set_by_id(name=self._tool)
             self.redraw_viewports(context)
             return {'CANCELLED'}
+
         return {'PASS_THROUGH'}
     
     def invoke(self, context, event):
         dofu = context.scene.dof_utils #context.area.tag_redraw()
         prefs = context.preferences.addons[__name__].preferences
-        
+
         if not dofu.use_cursor:
             if context.space_data.type == 'VIEW_3D':
+                
+                # Get the current active tool
+                from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
+                self._tool = ToolSelectPanelHelper.tool_active_from_context(context).idname
+
                 if prefs.display_info and not DofUtilsSettings._instructions_handle:
                     args = (self, context)
                     DofUtilsSettings._instructions_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
