@@ -417,13 +417,22 @@ class DofUtilsFocusPicking(bpy.types.Operator):
                 area.tag_redraw()
 
     def modal(self, context, event):
-        context.area.tag_redraw()
         scene = context.scene
         dofu = scene.dof_utils
         prefs = context.preferences.addons[__name__].preferences
 
-        # Set cursor tool
-        bpy.ops.wm.tool_set_by_id(name ="builtin.cursor")
+        if context.area is not None:
+            context.area.tag_redraw()
+
+        try:
+            # Set cursor tool
+            bpy.ops.wm.tool_set_by_id(name ="builtin.cursor")
+        except:
+            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
+            DofUtilsSettings._instructions_handle = None
+            context.scene.dof_utils.use_cursor = False
+            return {'CANCELLED'}
+
         if event.type == 'LEFTMOUSE': 
             if event.value == 'RELEASE':
                 context.object.data.dof.focus_distance = \
@@ -449,7 +458,7 @@ class DofUtilsFocusPicking(bpy.types.Operator):
         prefs = context.preferences.addons[__name__].preferences
 
         if not dofu.use_cursor:
-            if context.space_data.type == 'VIEW_3D':
+            if context.area.type == 'VIEW_3D':
                 
                 # Get the current active tool
                 from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
@@ -487,11 +496,13 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
                 area.tag_redraw()
 
     def modal(self, context, event):
-        context.area.tag_redraw()
         dofu = context.scene.dof_utils
         prefs = context.preferences.addons[__name__].preferences
 
-        if prefs.display_limits:
+        if context.area is not None:
+            context.area.tag_redraw()
+
+        if prefs.display_limits and context.area is not None:
             context.area.header_text_set("Focus Distance: %.3f Near Limit: %.3f Far Limit: %.3f" % tuple(dofu.limits))
 
         if event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.draw_dof:
@@ -503,7 +514,8 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
                 DofUtilsSettings._visualize_handle = None
             except:
                 pass
-            context.area.header_text_set(text=None)
+            if context.area is not None:
+                context.area.header_text_set(text=None)
             self.redraw_viewports(context)
             return {'CANCELLED'}
         
