@@ -20,7 +20,7 @@ bl_info = {
     "name": "Depth of Field Utilities",
     "author": "Christian Brinkmann (p2or)",
     "description": "Displays depth of field in 3D view port.",
-    "version": (0, 0, 9),
+    "version": (0, 1, 0),
     "blender": (2, 80, 0),
     "location": "3d View > Properties Panel (N) > Depth of Field Utilities",
     "wiki_url": "https://github.com/p2or/blender-dof-utils",
@@ -42,7 +42,7 @@ from mathutils.geometry import intersect_point_line
 #   Preferences & Scene Properties
 # ------------------------------------------------------------------------
 
-class DofUtilsPreferences(bpy.types.AddonPreferences):
+class DOFU_AP_preferences(bpy.types.AddonPreferences):
 
     bl_idname = __name__
     
@@ -63,7 +63,7 @@ class DofUtilsPreferences(bpy.types.AddonPreferences):
         layout.row().operator("dof_utils.reset_preferences", icon='FILE_REFRESH')
 
 
-class DofUtilsSettings(bpy.types.PropertyGroup):
+class DOFU_PG_settings(bpy.types.PropertyGroup):
 
     _visualize_handle = None 
     _instructions_handle = None
@@ -398,7 +398,7 @@ def draw_circle(matrix, radius=.1, num_segments=16, offset=0, offset_axis="Z", c
 #    Operators
 # ------------------------------------------------------------------------
 
-class DofUtilsFocusPicking(bpy.types.Operator):
+class DOFU_OT_focusPicking(bpy.types.Operator):
     """Sets the focus distance by using the 3d cursor"""
     bl_idname = "dof_utils.focus_picking"
     bl_label = "Set Focus using 3d Cursor"
@@ -428,8 +428,8 @@ class DofUtilsFocusPicking(bpy.types.Operator):
             # Set cursor tool
             bpy.ops.wm.tool_set_by_id(name ="builtin.cursor")
         except:
-            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
-            DofUtilsSettings._instructions_handle = None
+            bpy.types.SpaceView3D.draw_handler_remove(DOFU_PG_settings._instructions_handle, 'WINDOW')
+            DOFU_PG_settings._instructions_handle = None
             context.scene.dof_utils.use_cursor = False
             return {'CANCELLED'}
 
@@ -442,8 +442,8 @@ class DofUtilsFocusPicking(bpy.types.Operator):
         elif event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.use_cursor:
             dofu.use_cursor = False
             try:
-                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
-                DofUtilsSettings._instructions_handle = None
+                bpy.types.SpaceView3D.draw_handler_remove(DOFU_PG_settings._instructions_handle, 'WINDOW')
+                DOFU_PG_settings._instructions_handle = None
             except:
                 pass
             # Reset to selected tool before running the operator
@@ -464,9 +464,9 @@ class DofUtilsFocusPicking(bpy.types.Operator):
                 from bl_ui.space_toolsystem_common import ToolSelectPanelHelper
                 self._tool = ToolSelectPanelHelper.tool_active_from_context(context).idname
 
-                if prefs.display_info and not DofUtilsSettings._instructions_handle:
+                if prefs.display_info and not DOFU_PG_settings._instructions_handle:
                     args = (self, context)
-                    DofUtilsSettings._instructions_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
+                    DOFU_PG_settings._instructions_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
                 
                 context.window_manager.modal_handler_add(self)
                 dofu.use_cursor = True
@@ -479,7 +479,7 @@ class DofUtilsFocusPicking(bpy.types.Operator):
             return {'CANCELLED'}
 
 
-class DofUtilsVisualizeLimits(bpy.types.Operator):
+class DOFU_OT_visualizeLimits(bpy.types.Operator):
     """ Draws depth of field in the viewport via OpenGL """
     bl_idname = "dof_utils.visualize_dof"
     bl_label = "Visualize Depth of Field"
@@ -508,10 +508,10 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
         if event.type in {'RIGHTMOUSE', 'ESC'} or not dofu.draw_dof:
             dofu.draw_dof = False
             try: # TODO, viewport class
-                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._visualize_handle, 'WINDOW')
-                bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
-                DofUtilsSettings._instructions_handle = None
-                DofUtilsSettings._visualize_handle = None
+                bpy.types.SpaceView3D.draw_handler_remove(DOFU_PG_settings._visualize_handle, 'WINDOW')
+                bpy.types.SpaceView3D.draw_handler_remove(DOFU_PG_settings._instructions_handle, 'WINDOW')
+                DOFU_PG_settings._instructions_handle = None
+                DOFU_PG_settings._visualize_handle = None
             except:
                 pass
             if context.area is not None:
@@ -529,10 +529,10 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
             if context.area.type == 'VIEW_3D':
                 args = (self, context)
                 # Add the region OpenGL drawing callback, draw in view space with 'POST_VIEW' and 'PRE_VIEW'
-                DofUtilsSettings._visualize_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_3d, args, 'WINDOW', 'POST_VIEW')
+                DOFU_PG_settings._visualize_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_3d, args, 'WINDOW', 'POST_VIEW')
 
-                if prefs.display_info and not DofUtilsSettings._instructions_handle:
-                    DofUtilsSettings._instructions_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
+                if prefs.display_info and not DOFU_PG_settings._instructions_handle:
+                    DOFU_PG_settings._instructions_handle = bpy.types.SpaceView3D.draw_handler_add(draw_callback_2d, args, 'WINDOW', 'POST_PIXEL')
                 
                 context.window_manager.modal_handler_add(self)
                 dofu.draw_dof = True
@@ -547,7 +547,7 @@ class DofUtilsVisualizeLimits(bpy.types.Operator):
             return {'CANCELLED'}
 
 
-class DofUtilsKillVisualization(bpy.types.Operator):
+class DOFU_OT_killVisualisation(bpy.types.Operator):
     """ Kill Visualization """
     bl_idname = "dof_utils.kill_visualization"
     bl_label = "Kill Visualization"
@@ -558,7 +558,7 @@ class DofUtilsKillVisualization(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class DofUtilsKillFocusPicking(bpy.types.Operator):
+class DOFU_OT_killFocusPicking(bpy.types.Operator):
     """ Kill Focus Picking """
     bl_idname = "dof_utils.kill_focus_picking"
     bl_label = "Kill Visualization"
@@ -569,7 +569,7 @@ class DofUtilsKillFocusPicking(bpy.types.Operator):
         return {'FINISHED'}
 
 
-class DofUtilsResetViewport(bpy.types.Operator):
+class DOFU_OT_viewportReset(bpy.types.Operator):
     """ Reset Viewport """
     bl_idname = "dof_utils.reset_viewport"
     bl_label = "Reset Viewport"
@@ -578,17 +578,17 @@ class DofUtilsResetViewport(bpy.types.Operator):
     # TODO, viewport class
     def execute(self, context):
         try: 
-            DofUtilsSettings._instructions_handle = None
-            DofUtilsSettings._visualize_handle = None
-            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._instructions_handle, 'WINDOW')
-            bpy.types.SpaceView3D.draw_handler_remove(DofUtilsSettings._visualize_handle, 'WINDOW')
+            DOFU_PG_settings._instructions_handle = None
+            DOFU_PG_settings._visualize_handle = None
+            bpy.types.SpaceView3D.draw_handler_remove(DOFU_PG_settings._instructions_handle, 'WINDOW')
+            bpy.types.SpaceView3D.draw_handler_remove(DOFU_PG_settings._visualize_handle, 'WINDOW')
             
         except:
             pass
         return {'FINISHED'}
 
 
-class DofUtilsResetPreferences(bpy.types.Operator):
+class DOFU_OT_preferencesReset(bpy.types.Operator):
     """ Reset Add-on Preferences """
     bl_idname = "dof_utils.reset_preferences"
     bl_label = "Reset Properties and Settings"
@@ -613,85 +613,94 @@ class DofUtilsResetPreferences(bpy.types.Operator):
 #    UI
 # ------------------------------------------------------------------------
 
-class DOFU_PT_main_panel(bpy.types.Panel):  
-    bl_label = "Depth of Field Utilities"  
+class DOFU_panel:
     bl_space_type = "VIEW_3D"  
     bl_region_type = "UI"
     bl_category = "DoF Utils"
     
     @classmethod
     def poll(cls, context):
-        #rd = context.scene.render
-        return is_camera(context.object)# and rd.engine == "CYCLES"
-    
-    def draw(self, context):
-        scene = context.scene
-        dofu = scene.dof_utils #cam_ob = scene.camera.data
-        cam_ob = context.active_object.data
-        #ccam = cam_ob.cycles
-        
-        row = self.layout.row()
-        row.prop(cam_ob.dof, "use_dof", text="Enable Depth of Field", toggle=True)
-        self.layout.separator()
+        return is_camera(context.object)
 
-        col = self.layout.column(align=True)
-        row = col.row(align=True)
-        viz = row.row(align=True)
+
+class DOFU_PT_main_panel(DOFU_panel, bpy.types.Panel):
+    bl_label = "Depth of Field"  
+    bl_category = "DoF Utils"
+    
+    def draw_header(self, context):
+        self.layout.prop(context.active_object.data.dof, "use_dof", text="")
+
+    def draw(self, context):
+        dofu = context.scene.dof_utils #cam_ob = scene.camera.data
+        cam_ob = context.active_object.data
+        
+        layout = self.layout
+        layout.use_property_split = True
+
+        layout.active = cam_ob.dof.use_dof
+        active_flag = not dofu.use_cursor and cam_ob.dof.focus_object is None
+        
+        # Visualize
+        row = layout.row(align=True)
+        viz = row.column(align=True)
         viz.enabled = not dofu.draw_dof # enabled
         viz.operator("dof_utils.visualize_dof", icon="SNAP_NORMAL" if not dofu.draw_dof else "REC")
-        row = row.row(align=True)
+        row = row.column(align=True)
         row.operator("dof_utils.kill_visualization", icon="X", text="")
 
-        row = col.row(align=True)
-        #split = row.split(.07, align=True)
-        row.prop(dofu, "color_limits", text="")
-        #row = split.row(align=True)
-    
-        row = col.row(align=True)
-        row.prop(dofu, "size_limits")
-        row.prop(dofu, "opacity_limits")
-        row.prop(dofu, "segments_limits")
-        #row.prop(dofu, "fill_limits", text="", icon="META_EMPTY")
-        
-        row = col.row(align=True)
-        row.prop(dofu, "overlay", text="Overlay Limits", toggle=True, icon="GHOST_ENABLED")
-        row.prop(dofu, "draw_focus", toggle=True, icon="FORCE_FORCE")
-        #row.prop(dofu, "fill_limits", text="", icon="PROP_ON")
-        #row = col.row(align=True)
-        #row.prop(dofu, "fill_limits", text="Reset", icon="FILE_REFRESH")
-        
-        col = self.layout.column(align=True)
-        col.label(text="Aperture:")
-        row = col.row(align=True)
-        #row.prop(ccam, "aperture_type", expand=True)
-        # Following lines rem as radius option not exist
-        #if ccam.aperture_type == 'RADIUS':
-        #    col.prop(ccam, "aperture_size", text="Size")
-        #elif ccam.aperture_type == 'FSTOP':
-        col.prop(cam_ob.dof, "aperture_fstop", text="Number")
-
-        col = self.layout.column(align=True)
-        col.label(text="Focus:")
-        row = col.row(align=True)
-        pic = row.row(align=True)
-        active_flag = not dofu.use_cursor and cam_ob.dof.focus_object is None
+        # Focus Picking
+        row = layout.row(align=True)
+        pic = row.column(align=True)
         pic.enabled = active_flag # enabled
         pic.operator("dof_utils.focus_picking", icon="RESTRICT_SELECT_OFF" if active_flag or cam_ob.dof.focus_object else "REC")
-        row = row.row(align=True) #layout.prop_search(dofu, "camera", bpy.data, "cameras")
+        row = row.column(align=True) #layout.prop_search(dofu, "camera", bpy.data, "cameras")
         row.enabled = cam_ob.dof.focus_object is None
         row.operator("dof_utils.kill_focus_picking", icon="X", text="")
-        row = col.row(align=True)
-        dis = row.row(align=True)
-        dis.enabled = active_flag # active
-        dis.prop(cam_ob.dof, "focus_distance", text="Distance")
-        col.prop(cam_ob.dof, "focus_object", text="")
 
-        col = self.layout.column(align=True)
-        cam_info = ["Cam: {}".format(cam_ob.name)]
-        if cam_ob.type == "PERSP":
-            cam_info.append(" Lens: {:.2f}mm".format(cam_ob.lens))
-        col.label(text=",".join(cam_info))
-        self.layout.separator()
+
+class DOFU_PT_camera(DOFU_panel, bpy.types.Panel):  
+    bl_label = "Camera Settings"
+    bl_parent_id = "DOFU_PT_main_panel"
+
+    def draw(self, context):
+        dofu = context.scene.dof_utils #cam_ob = scene.camera.data
+        cam_ob = context.active_object.data
+        active_flag = not dofu.use_cursor and cam_ob.dof.focus_object is None
+
+        layout = self.layout
+        layout.use_property_split = True
+        layout.active = cam_ob.dof.use_dof
+        
+        col = layout.column()
+        col.prop(cam_ob.dof, "aperture_fstop", text="F-Stop")
+        dis = col.column()
+        dis.enabled = active_flag # active
+        dis.prop(cam_ob.dof, "focus_distance", text="Focus Distance")
+        col.prop(cam_ob, "lens")
+        col.prop(cam_ob.dof, "focus_object", text="Focus Object")
+        layout.separator()
+
+
+class DOFU_PT_visualize(DOFU_panel, bpy.types.Panel):  
+    bl_label = "Visualisation Options"
+    bl_parent_id = "DOFU_PT_main_panel"
+    
+    def draw(self, context):
+        dofu = context.scene.dof_utils #cam_ob = scene.camera.data
+        
+        layout = self.layout
+        layout.use_property_split = True
+        layout.active = context.active_object.data.dof.use_dof
+
+        col = layout.column()
+        col.prop(dofu, "color_limits", text="Color")
+        col.prop(dofu, "size_limits")
+        col.prop(dofu, "opacity_limits")
+        col.prop(dofu, "segments_limits")
+        col = layout.column()
+        col.prop(dofu, "overlay", text="Overlay Limits")#, toggle=True, icon="GHOST_ENABLED")
+        col.prop(dofu, "draw_focus") #, toggle=True, icon="FORCE_FORCE")
+        layout.separator()
 
 
 # ------------------------------------------------------------------------
@@ -699,15 +708,17 @@ class DOFU_PT_main_panel(bpy.types.Panel):
 # ------------------------------------------------------------------------
 
 classes = (
-    DofUtilsPreferences,
-    DofUtilsFocusPicking,
-    DofUtilsVisualizeLimits,
-    DofUtilsKillVisualization,
-    DofUtilsKillFocusPicking,
-    DofUtilsResetViewport,
-    DofUtilsResetPreferences,
+    DOFU_AP_preferences,
+    DOFU_PG_settings,
+    DOFU_OT_focusPicking,
+    DOFU_OT_visualizeLimits,
+    DOFU_OT_killVisualisation,
+    DOFU_OT_killFocusPicking,
+    DOFU_OT_viewportReset,
+    DOFU_OT_preferencesReset,
     DOFU_PT_main_panel,
-    DofUtilsSettings
+    DOFU_PT_camera,
+    DOFU_PT_visualize
 )
 
 
@@ -716,7 +727,7 @@ def register():
     for cls in classes:
         register_class(cls)
 
-    bpy.types.Scene.dof_utils = bpy.props.PointerProperty(type=DofUtilsSettings)
+    bpy.types.Scene.dof_utils = bpy.props.PointerProperty(type=DOFU_PG_settings)
 
 def unregister():
     bpy.ops.dof_utils.reset_preferences()
