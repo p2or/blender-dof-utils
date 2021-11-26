@@ -23,7 +23,7 @@ bl_info = {
     "version": (0, 1, 0),
     "blender": (2, 80, 0),
     "location": "3d View > Properties Panel (N) > Depth of Field Utilities",
-    "wiki_url": "https://github.com/p2or/blender-dof-utils",
+    "doc_url": "https://github.com/p2or/blender-dof-utils",
     "tracker_url": "https://github.com/p2or/blender-dof-utils/issues",
     "category": "Render"
 }
