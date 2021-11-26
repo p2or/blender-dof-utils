@@ -46,11 +46,11 @@ class DOFU_AP_preferences(bpy.types.AddonPreferences):
 
     bl_idname = __name__
     
-    display_info : bpy.props.BoolProperty(
+    display_info: bpy.props.BoolProperty(
             name="Display Infos in Viewport",
             default = True)
     
-    display_limits : bpy.props.BoolProperty(
+    display_limits: bpy.props.BoolProperty(
         name="Display Limits in Viewport Header",
         description="Displays distance, near & far limits in viewport header",
         default = True)
@@ -68,59 +68,59 @@ class DOFU_PG_settings(bpy.types.PropertyGroup):
     _visualize_handle = None 
     _instructions_handle = None
 
-    use_cursor : bpy.props.BoolProperty(
+    use_cursor: bpy.props.BoolProperty(
         name="Use 3d Cursor Flag",
         description="",
         default=False,
         options={'SKIP_SAVE'})
 
-    draw_dof : bpy.props.BoolProperty(
+    draw_dof: bpy.props.BoolProperty(
         name="Draw DoF Flag",
         description="",
         default=False,
         options={'SKIP_SAVE'})
     
-    overlay : bpy.props.BoolProperty(
+    overlay: bpy.props.BoolProperty(
         name="Line overlay",
         description="Display DoF above all other Elements",
         default=True)
 
-    size_limits : bpy.props.FloatProperty(
+    size_limits: bpy.props.FloatProperty(
         name="Size",
         description="Limit Radius",
         min=0.0,
         step=1,
         default=0.1)
 
-    fill_limits : bpy.props.BoolProperty(
+    fill_limits: bpy.props.BoolProperty(
         name="Fill limits",
         description="Fill Limits",
         default=False)
     
-    draw_focus : bpy.props.BoolProperty(
+    draw_focus: bpy.props.BoolProperty(
         name="Display Focus",
         description="Draw Focus",
         default=False)
 
-    color_limits : bpy.props.FloatVectorProperty(  
+    color_limits: bpy.props.FloatVectorProperty(  
        name="Color Limits",
        subtype='COLOR',
        default=(0.0, 1.0, 0.0),
        min=0.0, max=1.0,
        description="color picker")
 
-    segments_limits : bpy.props.IntProperty(  
+    segments_limits: bpy.props.IntProperty(  
        name="Segments",
        default=16,
        min=3, max=32)
 
-    opacity_limits : bpy.props.FloatProperty(
+    opacity_limits: bpy.props.FloatProperty(
         name="Opacity",
         min=0.1, max=1.0,
         step=1,
         default=0.9)
 
-    limits : bpy.props.FloatVectorProperty(
+    limits: bpy.props.FloatVectorProperty(
             name="Limits",
             size=3)
     
@@ -547,7 +547,7 @@ class DOFU_OT_visualizeLimits(bpy.types.Operator):
             return {'CANCELLED'}
 
 
-class DOFU_OT_killVisualisation(bpy.types.Operator):
+class DOFU_OT_killVisualization(bpy.types.Operator):
     """ Kill Visualization """
     bl_idname = "dof_utils.kill_visualization"
     bl_label = "Kill Visualization"
@@ -682,7 +682,7 @@ class DOFU_PT_camera(DOFU_panel, bpy.types.Panel):
 
 
 class DOFU_PT_visualize(DOFU_panel, bpy.types.Panel):  
-    bl_label = "Visualisation Options"
+    bl_label = "Visualization"
     bl_parent_id = "DOFU_PT_main_panel"
     
     def draw(self, context):
@@ -712,7 +712,7 @@ classes = (
     DOFU_PG_settings,
     DOFU_OT_focusPicking,
     DOFU_OT_visualizeLimits,
-    DOFU_OT_killVisualisation,
+    DOFU_OT_killVisualization,
     DOFU_OT_killFocusPicking,
     DOFU_OT_viewportReset,
     DOFU_OT_preferencesReset,
