@@ -20,7 +20,7 @@ bl_info = {
     "name": "Depth of Field Utilities",
     "author": "Christian Brinkmann (p2or)",
     "description": "Displays depth of field in 3D view port.",
-    "version": (0, 1, 0),
+    "version": (0, 1, 1),
     "blender": (2, 80, 0),
     "location": "3d View > Properties Panel (N) > Depth of Field Utilities",
     "doc_url": "https://github.com/p2or/blender-dof-utils",
