@@ -273,11 +273,9 @@ def draw_callback_3d(operator, context):
             size=dofu.size_limits * 1.7,
             color=(dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits))
 
-    # restore opengl defaults
-    gpu.state.blend_set('ALPHA') # bgl.glEnable(bgl.GL_BLEND) bgl.glLineWidth(1)
-    #bgl.glDisable(bgl.GL_BLEND)
-    #bgl.glDisable(bgl.GL_LINE_SMOOTH)
-    #bgl.glEnable(bgl.GL_DEPTH_TEST)
+    # restore defaults
+    gpu.state.line_width_set(1.0)
+    gpu.state.blend_set('NONE')
 
 def draw_string(x, y, packed_strings):
     font_id = 0
