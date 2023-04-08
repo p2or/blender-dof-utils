@@ -281,12 +281,12 @@ def draw_callback_3d(operator, context):
 
 def draw_string(x, y, packed_strings):
     font_id = 0
-    blf.size(font_id, 17, 70) 
+    blf.size(font_id, 17*(bpy.context.preferences.system.dpi/72))
     x_offset = 0
     for pstr, pcol in packed_strings:
-        #bgl.glColor4f(*pcol)
         text_width, text_height = blf.dimensions(font_id, pstr)
         blf.position(font_id, (x + x_offset), y, 0)
+        blf.color(font_id, *pcol)
         blf.draw(font_id, pstr)
         x_offset += text_width
 
