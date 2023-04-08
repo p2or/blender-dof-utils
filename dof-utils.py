@@ -19,8 +19,8 @@
 bl_info = {
     "name": "Depth of Field Utilities",
     "author": "Christian Brinkmann (p2or)",
-    "description": "Displays depth of field in 3D view port.",
-    "version": (0, 1, 1),
+    "description": "Displays depth of field in 3D viewport.",
+    "version": (0, 1, 0),
     "blender": (2, 80, 0),
     "location": "3d View > Properties Panel (N) > Depth of Field Utilities",
     "doc_url": "https://github.com/p2or/blender-dof-utils",
@@ -29,7 +29,6 @@ bl_info = {
 }
 
 import bpy
-import bgl
 import blf
 import gpu
 from gpu_extras.batch import batch_for_shader
@@ -225,18 +224,22 @@ def draw_callback_3d(operator, context):
     dofu.limits = (d, near_limit, far_limit)
 
     # 80% alpha, 2 pixel width line
-    bgl.glEnable(bgl.GL_BLEND)
-    bgl.glEnable(bgl.GL_LINE_SMOOTH)
-    bgl.glEnable(bgl.GL_DEPTH_TEST)
+    gpu.state.blend_set('ALPHA') # bgl.glEnable(bgl.GL_BLEND)
+    #bgl.glEnable(bgl.GL_LINE_SMOOTH)
+    gpu.state.depth_mask_set(True)
     
     # check overlay
     if dofu.overlay:
-        bgl.glDisable(bgl.GL_DEPTH_TEST)
+        gpu.state.depth_mask_set(True) #bgl.glEnable(bgl.GL_DEPTH_TEST)
+        #gpu.state.blend_set('NONE') # bgl.glDisable(bgl.GL_DEPTH_TEST)
+        #if not gpu.state.depth_mask_get():
+            #gpu.state.depth_mask_set(True)
     else:
-        bgl.glEnable(bgl.GL_DEPTH_TEST)
+        gpu.state.depth_mask_set(False)
+        gpu.state.blend_set('NONE')
     
     # set line width
-    bgl.glLineWidth(2)
+    gpu.state.line_width_set(2) # bgl.glLineWidth(2)
 
     def line(color, start, end):
         vertices = [start,end]
@@ -275,12 +278,10 @@ def draw_callback_3d(operator, context):
             color=(dofu.color_limits[0], dofu.color_limits[1], dofu.color_limits[2], dofu.opacity_limits))
 
     # restore opengl defaults
-    bgl.glLineWidth(1)
-    bgl.glDisable(bgl.GL_BLEND)
-    bgl.glDisable(bgl.GL_LINE_SMOOTH)
-    bgl.glEnable(bgl.GL_DEPTH_TEST)
-    #bgl.glColor4f(0.0, 0.0, 0.0, 1.0)
-
+    gpu.state.blend_set('ALPHA') # bgl.glEnable(bgl.GL_BLEND) bgl.glLineWidth(1)
+    #bgl.glDisable(bgl.GL_BLEND)
+    #bgl.glDisable(bgl.GL_LINE_SMOOTH)
+    #bgl.glEnable(bgl.GL_DEPTH_TEST)
 
 def draw_string(x, y, packed_strings):
     font_id = 0
@@ -314,7 +315,7 @@ def draw_poly(coords, color, width):
     # Create batch process
     batch = batch_for_shader(shader,'LINE_STRIP', {"pos": coords})
     # Set the line width
-    bgl.glLineWidth(width)
+    gpu.state.line_width_set(width) # bgl.glLineWidth(width)
     shader.bind()
     # Set color
     shader.uniform_float("color",color)
