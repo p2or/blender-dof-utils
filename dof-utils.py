@@ -225,18 +225,14 @@ def draw_callback_3d(operator, context):
 
     # 80% alpha, 2 pixel width line
     gpu.state.blend_set('ALPHA') # bgl.glEnable(bgl.GL_BLEND)
-    #bgl.glEnable(bgl.GL_LINE_SMOOTH)
-    gpu.state.depth_mask_set(True)
-    
+    #bgl.glEnable(bgl.GL_LINE_SMOOTH) # -> No replacement gpu.shader.from_builtin('POLYLINE_SMOOTH_COLOR')
+    gpu.state.depth_test_set("LESS") # bgl.glEnable(bgl.GL_DEPTH_TEST)
+
     # check overlay
     if dofu.overlay:
-        gpu.state.depth_mask_set(True) #bgl.glEnable(bgl.GL_DEPTH_TEST)
-        #gpu.state.blend_set('NONE') # bgl.glDisable(bgl.GL_DEPTH_TEST)
-        #if not gpu.state.depth_mask_get():
-            #gpu.state.depth_mask_set(True)
+        gpu.state.depth_test_set("NONE") # bgl.glDisable(bgl.GL_DEPTH_TEST)
     else:
-        gpu.state.depth_mask_set(False)
-        gpu.state.blend_set('NONE')
+        gpu.state.depth_test_set("LESS") # bgl.glEnable(bgl.GL_DEPTH_TEST)
     
     # set line width
     gpu.state.line_width_set(2) # bgl.glLineWidth(2)
@@ -246,7 +242,7 @@ def draw_callback_3d(operator, context):
         shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
         batch = batch_for_shader(shader,'LINE_STRIP', {"pos": vertices})
         shader.bind()
-        shader.uniform_float("color",color)
+        shader.uniform_float("color", color)
         batch.draw(shader)
         #bgl.glColor4f(*color)
         #bgl.glBegin(bgl.GL_LINES)
