@@ -4,7 +4,7 @@ Prototype to visualize the [Depth of Field](https://en.wikipedia.org/wiki/Depth_
 
 ![intro](https://i.stack.imgur.com/jYyag.jpg)
 
-In addition to that, the Add-on also allows to set the [focus distance](https://docs.blender.org/manual/en/dev/render/cycles/camera.html#focus) by using the *3d Cursor*.
+In addition to that, the Add-on also allows to set the [focus distance](https://docs.blender.org/manual/en/latest/render/cameras.html#depth-of-field) by using the *3d Cursor*.
 
 #### Installation
 
