@@ -239,7 +239,7 @@ def draw_callback_3d(operator, context):
 
     def line(color, start, end):
         vertices = [start,end]
-        shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+        shader = gpu.shader.from_builtin('UNIFORM_COLOR')
         batch = batch_for_shader(shader,'LINE_STRIP', {"pos": vertices})
         shader.bind()
         shader.uniform_float("color", color)
@@ -305,7 +305,7 @@ def draw_callback_2d(operator, context):
 
 def draw_poly(coords, color, width):
     # Get shader
-    shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+    shader = gpu.shader.from_builtin('UNIFORM_COLOR')
     # Create batch process
     batch = batch_for_shader(shader,'LINE_STRIP', {"pos": coords})
     # Set the line width
